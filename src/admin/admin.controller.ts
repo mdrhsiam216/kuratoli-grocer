@@ -7,9 +7,9 @@ import {
   Param,
   Delete,
   Put,
+  Query,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { AdminDto } from './dto/admin.dto';
 import { CustomerDto } from './dto/customer.dto';
 import { SellerDto } from './dto/seller.dto';
 import { ManagerDto } from './dto/manager.dto';
@@ -17,6 +17,11 @@ import { ManagerDto } from './dto/manager.dto';
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
+
+  @Get('profile')
+  getProfile(@Query('id') id: string) {
+    return this.adminService.getProfile(id);
+  }
 
   @Get("customer")
   findAllCustomer() {

@@ -10,6 +10,12 @@ export class AdminService {
     return AdminDto;
   }
 
+  getProfile(id){
+    return {
+      msg: `returned profile with id ${id}`
+    }
+  }
+
   findAllCustomer() {
     return {
       msg : "returned all customer"
