@@ -1,0 +1,99 @@
+customers
+---------
+id (pk)
+name (string)
+email (string, unique)
+password (string)
+phone (string)
+address (text)
+photo (string, nullable)
+
+
+sellers
+-------
+id (pk)
+name (string) // shop name
+email (string, unique)
+password (string)
+address (text)
+photo (string, nullable)
+status (true/false)
+
+
+managers
+--------
+id (pk)
+name (string)
+email (string, unique)
+password (string)
+photo (string, nullable)
+
+
+admins
+------
+id (pk)
+name (string)
+email (string, unique)
+password (string)
+
+
+categories
+----------
+id (pk)
+name (string)
+
+
+products
+--------
+id (pk)
+seller_id (fk -> sellers.id)
+category_id (fk -> categories.id)
+name (string)
+description (text)
+price (decimal)
+stock (int)
+image (string)
+status (boolean) // active/inactive
+
+
+carts
+-----
+id (pk)
+customer_id (fk -> customers.id, unique)
+
+cart_items
+----------
+id (pk)
+cart_id (fk -> carts.id)
+product_id (fk -> products.id)
+quantity (int)
+
+
+coupons
+-------
+id (pk)
+code (string, unique)
+discount_percentage (float)
+max_usage (int)
+used_count (int default 0)
+
+
+
+orders
+------
+id (pk)
+customer_id (fk -> customers.id)
+coupon_id (fk -> coupons.id, nullable)
+total_price (decimal)
+status (enum: 'pending', 'confirmed', 'delivered', 'cancelled')
+
+
+order_items
+-----------
+id (pk)
+order_id (fk -> orders.id)
+product_id (fk -> products.id)
+quantity (int)
+price (decimal) // snapshot price
+
+

@@ -1,12 +1,12 @@
 import {
-  IsNotEmpty,
   IsEmail,
+  IsNotEmpty,
   IsOptional,
-  IsInt,
   IsString,
+  IsInt,
 } from 'class-validator';
 
-export class AdminDto {
+export class CustomerDto {
   @IsOptional()
   @IsInt()
   id?: number;
@@ -22,4 +22,16 @@ export class AdminDto {
   @IsNotEmpty()
   @IsString()
   password!: string;
+
+  @IsNotEmpty()
+  @IsString()
+  phone!: string;
+
+  @IsNotEmpty()
+  @IsString()
+  address!: string;
+
+  @IsOptional()
+  @IsString()
+  photo?: string;
 }

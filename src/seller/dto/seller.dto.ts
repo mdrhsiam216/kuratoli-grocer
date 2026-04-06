@@ -1,14 +1,7 @@
-import {
-  IsNotEmpty,
-  IsEmail,
-  IsOptional,
-  IsInt,
-  IsString,
-} from 'class-validator';
+import { IsNotEmpty, IsEmail, IsOptional, IsString } from 'class-validator';
 
-export class AdminDto {
+export class SellerDto {
   @IsOptional()
-  @IsInt()
   id?: number;
 
   @IsNotEmpty()
