@@ -59,7 +59,10 @@ export class CustomerService {
     const cart = this.cartRepository.create({ customer: savedCustomer });
     await this.cartRepository.save(cart);
 
-    return { message: 'Customer registered successfully', customer: savedCustomer };
+    return {
+      message: 'Customer registered successfully',
+      customer: savedCustomer,
+    };
   }
 
   async login(loginDto: LoginDto) {
@@ -68,13 +71,22 @@ export class CustomerService {
     });
 
     if (!customer) {
-      throw new HttpException('Invalid email or password', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        'Invalid email or password',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
-    const isPasswordValid = await bcrypt.compare(loginDto.password, customer.password);
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      customer.password,
+    );
 
     if (!isPasswordValid) {
-      throw new HttpException('Invalid email or password', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        'Invalid email or password',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     const payload = { email: customer.email, sub: customer.id };
@@ -105,7 +117,10 @@ export class CustomerService {
 
     const updatedCustomer = Object.assign(customer, updateData);
     await this.customerRepository.save(updatedCustomer);
-    return { message: 'Profile updated successfully', customer: updatedCustomer };
+    return {
+      message: 'Profile updated successfully',
+      customer: updatedCustomer,
+    };
   }
 
   async deleteProfile(customer: Customer) {
@@ -158,7 +173,10 @@ export class CustomerService {
     }
 
     if (addCartItemDto.quantity <= 0) {
-      throw new HttpException('Quantity must be greater than zero', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Quantity must be greater than zero',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const cart = await this.getCart(customer);
@@ -202,7 +220,10 @@ export class CustomerService {
       }
 
       if (coupon.usedCount >= coupon.maxUsage) {
-        throw new HttpException('Coupon has already expired', HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          'Coupon has already expired',
+          HttpStatus.BAD_REQUEST,
+        );
       }
     }
 
@@ -211,7 +232,9 @@ export class CustomerService {
       0,
     );
 
-    const discount = coupon ? (totalPrice * coupon.discountPercentage) / 100 : 0;
+    const discount = coupon
+      ? (totalPrice * coupon.discountPercentage) / 100
+      : 0;
     const finalPrice = Number((totalPrice - discount).toFixed(2));
 
     const order = this.orderRepository.create({

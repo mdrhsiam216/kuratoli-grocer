@@ -5,11 +5,13 @@ import {
   Put,
   Body,
   Req,
+  UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AdminDto } from './dto/admin.dto';
 import { LoginDto } from './dto/login.dto';
+import { AdminAuthGuard } from './auth.guard';
 
 @Controller('admin')
 export class AdminController {
@@ -25,43 +27,52 @@ export class AdminController {
     return this.adminService.login(loginDto);
   }
 
+  @UseGuards(AdminAuthGuard)
   @Get('profile')
   getProfile(@Req() req: any) {
     return this.adminService.getProfile(req.user);
   }
 
-  // Protected routes (require JWT)
-
+  @UseGuards(AdminAuthGuard)
   @Get('stats')
-  getDashboardStats(@Req() req: any) {
-    return this.adminService.getDashboardStats(req.user);
+  getDashboardStats() {
+    return this.adminService.getDashboardStats();
   }
 
+  @UseGuards(AdminAuthGuard)
   @Get('customers')
-  getAllCustomers(@Req() req: any) {
-    return this.adminService.getAllCustomers(req.user);
+  getAllCustomers() {
+    return this.adminService.getAllCustomers();
   }
 
+  @UseGuards(AdminAuthGuard)
   @Get('orders')
-  getAllOrders(@Req() req: any) {
-    return this.adminService.getAllOrders(req.user);
+  getAllOrders() {
+    return this.adminService.getAllOrders();
   }
 
+  @UseGuards(AdminAuthGuard)
   @Get('sellers')
-  getAllSellers(@Req() req: any) {
-    return this.adminService.getAllSellers(req.user);
+  getAllSellers() {
+    return this.adminService.getAllSellers();
   }
 
+  @UseGuards(AdminAuthGuard)
   @Get('products')
-  getAllProducts(@Req() req: any) {
-    return this.adminService.getAllProducts(req.user);
+  getAllProducts() {
+    return this.adminService.getAllProducts();
   }
 
+  @UseGuards(AdminAuthGuard)
   @Put('profile')
-  updateProfile(@Req() req: any, @Body() updateData: Partial<{ name: string; email: string }>) {
-    return this.adminService.updateProfile(req.user, updateData);
+  updateProfile(
+    @Req() req: any,
+    @Body() data: Partial<{ name: string; email: string }>,
+  ) {
+    return this.adminService.updateProfile(req.user, data);
   }
 
+  @UseGuards(AdminAuthGuard)
   @Post('logout')
   logout(@Req() req: any) {
     return this.adminService.logout(req.user);

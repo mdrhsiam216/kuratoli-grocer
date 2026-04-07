@@ -15,15 +15,16 @@ import { MailerModule } from '@nestjs-modules/mailer';
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
-      port:5432,
-      username:'postgres',
+      port: 5432,
+      username: 'postgres',
       password: '123',
       database: 'kuratoligrocer',
-      
+
       // load all entity files (ts for dev, js for prod)
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
+
     MailerModule.forRoot({
       transport: {
         host: 'smtp.gmail.com',

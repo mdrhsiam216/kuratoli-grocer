@@ -1,4 +1,4 @@
-import 'reflect-metadata';
+import * as bcrypt from 'bcrypt';
 import { DataSource } from 'typeorm';
 
 import { Admin } from '../admin/entities/admin.entity';
@@ -36,16 +36,32 @@ async function run() {
   const cartItemRepo = AppDataSource.getRepository(CartItem);
 
   // Seed admins
-  const adminsCount = await adminRepo.count();
-  if (adminsCount === 0) {
-    await adminRepo.save({ name: 'Super Admin', email: 'admin@kuratoli.local', password: 'admin123' });
+  const hashedPassword = await bcrypt.hash('admin123', 10);
+  let admin = await adminRepo.findOne({
+    where: { email: 'admin@kuratoli.local' },
+  });
+  if (!admin) {
+    admin = await adminRepo.save({
+      name: 'Super Admin',
+      email: 'admin@kuratoli.local',
+      password: hashedPassword,
+    });
     console.log('Seeded admin');
+  } else {
+    admin.password = hashedPassword;
+    await adminRepo.save(admin);
+    console.log('Updated admin password');
   }
 
   // Seed managers
   const managersCount = await managerRepo.count();
   if (managersCount === 0) {
-    await managerRepo.save({ name: 'Main Manager', email: 'manager@kuratoli.local', password: 'manager123' });
+    const hashedPassword = await bcrypt.hash('manager123', 10);
+    await managerRepo.save({
+      name: 'Main Manager',
+      email: 'manager@kuratoli.local',
+      password: hashedPassword,
+    });
     console.log('Seeded manager');
   }
 
@@ -53,8 +69,21 @@ async function run() {
   const sellersCount = await sellerRepo.count();
   let seller1: Seller | null = null;
   if (sellersCount === 0) {
-    seller1 = await sellerRepo.save({ name: "Fresh Fruits Shop", email: 'seller1@shop.local', password: 'seller123', address: 'Market Road', status: true });
-    await sellerRepo.save({ name: "Daily Grocer", email: 'seller2@shop.local', password: 'seller123', address: 'Town Center', status: true });
+    const hashedPassword = await bcrypt.hash('seller123', 10);
+    seller1 = await sellerRepo.save({
+      name: 'Fresh Fruits Shop',
+      email: 'seller1@shop.local',
+      password: hashedPassword,
+      address: 'Market Road',
+      status: true,
+    });
+    await sellerRepo.save({
+      name: 'Daily Grocer',
+      email: 'seller2@shop.local',
+      password: hashedPassword,
+      address: 'Town Center',
+      status: true,
+    });
     console.log('Seeded sellers');
   } else {
     seller1 = await sellerRepo.findOneBy({});
@@ -75,22 +104,52 @@ async function run() {
   // Seed products
   const productsCount = await productRepo.count();
   if (productsCount === 0 && seller1 && cat1) {
-    await productRepo.save({ seller: seller1, category: cat1, name: 'Apple', description: 'Fresh red apples', price: 1.5, stock: 100, image: 'apple.jpg', status: true });
-    await productRepo.save({ seller: seller1, category: cat1, name: 'Banana', description: 'Yellow bananas', price: 0.8, stock: 200, image: 'banana.jpg', status: true });
+    await productRepo.save({
+      seller: seller1,
+      category: cat1,
+      name: 'Apple',
+      description: 'Fresh red apples',
+      price: 1.5,
+      stock: 100,
+      image: 'apple.jpg',
+      status: true,
+    });
+    await productRepo.save({
+      seller: seller1,
+      category: cat1,
+      name: 'Banana',
+      description: 'Yellow bananas',
+      price: 0.8,
+      stock: 200,
+      image: 'banana.jpg',
+      status: true,
+    });
     console.log('Seeded products');
   }
 
   // Seed coupons
   const couponsCount = await couponRepo.count();
   if (couponsCount === 0) {
-    await couponRepo.save({ code: 'WELCOME10', discountPercentage: 10, maxUsage: 100, usedCount: 0 });
+    await couponRepo.save({
+      code: 'WELCOME10',
+      discountPercentage: 10,
+      maxUsage: 100,
+      usedCount: 0,
+    });
     console.log('Seeded coupons');
   }
 
   // Seed a customer with cart and cart items
   const customersCount = await customerRepo.count();
   if (customersCount === 0) {
-    const customer = await customerRepo.save({ name: 'John Doe', email: 'john@local', password: 'password', phone: '1234567890', address: '123 Main St' });
+    const hashedPassword = await bcrypt.hash('password', 10);
+    const customer = await customerRepo.save({
+      name: 'John Doe',
+      email: 'john@local',
+      password: hashedPassword,
+      phone: '1234567890',
+      address: '123 Main St',
+    });
     const cart = await cartRepo.save({ customer });
     const someProduct = await productRepo.findOneBy({ name: 'Apple' });
     if (someProduct) {

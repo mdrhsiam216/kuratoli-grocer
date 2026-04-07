@@ -1,37 +1,24 @@
-import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
 import { AdminService } from './admin.service';
 import { AdminController } from './admin.controller';
+import { AdminAuthGuard } from './auth.guard';
 import { Admin } from './entities/admin.entity';
-import { AuthMiddleware } from './auth.middleware';
+import { Customer } from '../customer/entities/customer.entity';
+import { Seller } from '../seller/entities/seller.entity';
+import { Product } from '../product/entities/product.entity';
+import { Order } from '../order/entities/order.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Admin]),
-    PassportModule,
+    TypeOrmModule.forFeature([Admin, Customer, Seller, Product, Order]),
     JwtModule.register({
-      secret: 'your-secret-key', // Use environment variable in production
+      secret: 'your-secret-key',
       signOptions: { expiresIn: '7d' },
     }),
   ],
   controllers: [AdminController],
-  providers: [AdminService],
-  exports: [AdminService, JwtModule],
+  providers: [AdminService, AdminAuthGuard],
 })
-export class AdminModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthMiddleware)
-      .forRoutes(
-        'admin/profile',
-        'admin/stats',
-        'admin/customers',
-        'admin/orders',
-        'admin/sellers',
-        'admin/products',
-        'admin/logout',
-      );
-  }
-}
+export class AdminModule {}

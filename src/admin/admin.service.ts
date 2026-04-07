@@ -7,158 +7,134 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { Admin } from './entities/admin.entity';
 import { AdminDto } from './dto/admin.dto';
 import { LoginDto } from './dto/login.dto';
+import { Customer } from '../customer/entities/customer.entity';
+import { Seller } from '../seller/entities/seller.entity';
+import { Product } from '../product/entities/product.entity';
+import { Order } from '../order/entities/order.entity';
 
 @Injectable()
 export class AdminService {
   constructor(
     @InjectRepository(Admin)
     private adminRepository: Repository<Admin>,
+    @InjectRepository(Customer)
+    private customerRepository: Repository<Customer>,
+    @InjectRepository(Seller)
+    private sellerRepository: Repository<Seller>,
+    @InjectRepository(Product)
+    private productRepository: Repository<Product>,
+    @InjectRepository(Order)
+    private orderRepository: Repository<Order>,
     private jwtService: JwtService,
     private mailerService: MailerService,
   ) {}
 
-  async register(adminDto: AdminDto): Promise<{ message: string; admin: Admin }> {
-    // Check if email already exists
-    const existingAdmin = await this.adminRepository.findOne({
-      where: { email: adminDto.email },
-    });
-
-    if (existingAdmin) {
-      throw new HttpException('Email already exists', HttpStatus.BAD_REQUEST);
+  async register(dto: AdminDto) {
+    if (await this.adminRepository.findOne({ where: { email: dto.email } })) {
+      throw new HttpException('Email exists', HttpStatus.BAD_REQUEST);
     }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(adminDto.password, 10);
-
-    // Create admin
-    const admin = this.adminRepository.create({
-      name: adminDto.name,
-      email: adminDto.email,
-      password: hashedPassword,
+    const admin = await this.adminRepository.save({
+      name: dto.name,
+      email: dto.email,
+      password: await bcrypt.hash(dto.password, 10),
     });
-
-    const savedAdmin = await this.adminRepository.save(admin);
-
-    // Send welcome email
     await this.mailerService.sendMail({
-      to: savedAdmin.email,
+      to: admin.email,
       subject: 'Welcome to Kuratoli Grocer',
-      text: `Hello ${savedAdmin.name}, your admin account has been created successfully.`,
+      text: `Hello ${admin.name}, your admin account created successfully.`,
     });
-
-    return { message: 'Admin registered successfully', admin: savedAdmin };
+    return { message: 'Admin registered', admin };
   }
 
-  async login(loginDto: LoginDto): Promise<{ message: string; token: string; admin: Admin }> {
-    // Find admin by email
+  async login(dto: LoginDto) {
     const admin = await this.adminRepository.findOne({
-      where: { email: loginDto.email },
+      where: { email: dto.email },
     });
-
-    if (!admin) {
-      throw new HttpException('Invalid email or password', HttpStatus.UNAUTHORIZED);
+    if (!admin || !(await bcrypt.compare(dto.password, admin.password))) {
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
-
-    // Compare password
-    const isPasswordValid = await bcrypt.compare(loginDto.password, admin.password);
-
-    if (!isPasswordValid) {
-      throw new HttpException('Invalid email or password', HttpStatus.UNAUTHORIZED);
-    }
-
-    // Generate JWT token
-    const payload = { email: admin.email, sub: admin.id };
-    const token = this.jwtService.sign(payload);
-
-    // Store token in database
+    const token = this.jwtService.sign({ email: admin.email, sub: admin.id });
     admin.token = token;
     await this.adminRepository.save(admin);
-
-    return { message: 'Admin logged in successfully', token, admin };
+    return { message: 'Logged in', token, admin };
   }
 
   async getProfile(admin: Admin): Promise<Admin> {
     return admin;
   }
 
-  // New protected routes
-
-  async getDashboardStats(admin: Admin): Promise<any> {
-    // Get aggregate statistics for admin dashboard
-    // This requires connection to other entities' repositories
-    return {
-      message: 'Dashboard stats',
-      admin: admin.email,
-      timestamp: new Date(),
-    };
+  getDashboardStats() {
+    return Promise.all([
+      this.customerRepository.count(),
+      this.sellerRepository.count(),
+      this.productRepository.count(),
+      this.orderRepository.count(),
+    ]).then(([customers, sellers, products, orders]) => ({
+      totalCustomers: customers,
+      totalSellers: sellers,
+      totalProducts: products,
+      totalOrders: orders,
+    }));
   }
 
-  async getAllCustomers(admin: Admin): Promise<any> {
-    // Return all customers list
-    // Admin verified through JWT middleware
-    return {
-      message: 'Customers list retrieved',
-      admin: admin.email,
-      timestamp: new Date(),
-    };
+  getAllCustomers() {
+    return this.customerRepository.find({
+      select: ['id', 'name', 'email', 'phone', 'address'],
+    });
   }
 
-  async getAllOrders(admin: Admin): Promise<any> {
-    // Return all orders with pagination
-    // Admin verified through JWT middleware
-    return {
-      message: 'Orders list retrieved',
-      admin: admin.email,
-      timestamp: new Date(),
-    };
+  getAllOrders() {
+    return this.orderRepository.find({
+      relations: ['customer', 'items'],
+      select: {
+        id: true,
+        totalPrice: true,
+        status: true,
+        customer: { id: true, name: true },
+        items: { id: true, quantity: true },
+      },
+    });
   }
 
-  async getAllSellers(admin: Admin): Promise<any> {
-    // Return all sellers information
-    // Admin verified through JWT middleware
-    return {
-      message: 'Sellers list retrieved',
-      admin: admin.email,
-      timestamp: new Date(),
-    };
+  getAllSellers() {
+    return this.sellerRepository.find({
+      select: ['id', 'name', 'email', 'address', 'status'],
+    });
   }
 
-  async getAllProducts(admin: Admin): Promise<any> {
-    // Return all products from all sellers
-    // Admin verified through JWT middleware
-    return {
-      message: 'Products list retrieved',
-      admin: admin.email,
-      timestamp: new Date(),
-    };
+  getAllProducts() {
+    return this.productRepository.find({
+      relations: ['seller'],
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        stock: true,
+        status: true,
+        seller: { id: true, name: true },
+      },
+    });
   }
 
   async updateProfile(
     admin: Admin,
-    updateData: Partial<{ name: string; email: string }>,
-  ): Promise<{ message: string; admin: Admin }> {
-    // Update admin profile information
-    // Only allow updating name and email
-    const existingAdmin = await this.adminRepository.findOne({
-      where: { email: updateData.email },
+    data: Partial<{ name: string; email: string }>,
+  ) {
+    const exists = await this.adminRepository.findOne({
+      where: { email: data.email },
     });
-
-    if (existingAdmin && existingAdmin.id !== admin.id) {
-      throw new HttpException('Email already in use', HttpStatus.BAD_REQUEST);
+    if (exists && exists.id !== admin.id) {
+      throw new HttpException('Email in use', HttpStatus.BAD_REQUEST);
     }
-
-    admin.name = updateData.name || admin.name;
-    admin.email = updateData.email || admin.email;
-
-    const updatedAdmin = await this.adminRepository.save(admin);
-    return { message: 'Profile updated successfully', admin: updatedAdmin };
+    admin.name = data.name || admin.name;
+    admin.email = data.email || admin.email;
+    const updated = await this.adminRepository.save(admin);
+    return { message: 'Profile updated', admin: updated };
   }
 
-  async logout(admin: Admin): Promise<{ message: string }> {
-    // Revoke token by removing it from database
-    // This prevents token reuse
+  async logout(admin: Admin) {
     admin.token = null;
     await this.adminRepository.save(admin);
-    return { message: 'Successfully logged out' };
+    return { message: 'Logged out' };
   }
 }
