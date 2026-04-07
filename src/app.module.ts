@@ -2,12 +2,14 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AdminModule } from './admin/admin.module';
+import { CustomerModule } from './customer/customer.module';
 import { SellerModule } from './seller/seller.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
     AdminModule,
+    CustomerModule,
     SellerModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
