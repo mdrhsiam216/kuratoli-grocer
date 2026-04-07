@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { MailerService } from '@nestjs-modules/mailer';
 import { Admin } from './entities/admin.entity';
 import { AdminDto } from './dto/admin.dto';
 import { LoginDto } from './dto/login.dto';
@@ -13,6 +14,7 @@ export class AdminService {
     @InjectRepository(Admin)
     private adminRepository: Repository<Admin>,
     private jwtService: JwtService,
+    private mailerService: MailerService,
   ) {}
 
   async register(adminDto: AdminDto): Promise<{ message: string; admin: Admin }> {
@@ -36,6 +38,14 @@ export class AdminService {
     });
 
     const savedAdmin = await this.adminRepository.save(admin);
+
+    // Send welcome email
+    await this.mailerService.sendMail({
+      to: savedAdmin.email,
+      subject: 'Welcome to Kuratoli Grocer',
+      text: `Hello ${savedAdmin.name}, your admin account has been created successfully.`,
+    });
+
     return { message: 'Admin registered successfully', admin: savedAdmin };
   }
 

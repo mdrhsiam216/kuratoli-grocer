@@ -14,6 +14,6 @@ export class Admin {
   @Column()
   password!: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   token!: string | null;
 }
