@@ -15,7 +15,9 @@ export class AdminService {
     private jwtService: JwtService,
   ) {}
 
-  async register(adminDto: AdminDto): Promise<{ message: string; admin: Admin }> {
+  async register(
+    adminDto: AdminDto,
+  ): Promise<{ message: string; admin: Admin }> {
     // Check if email already exists
     const existingAdmin = await this.adminRepository.findOne({
       where: { email: adminDto.email },
@@ -39,21 +41,32 @@ export class AdminService {
     return { message: 'Admin registered successfully', admin: savedAdmin };
   }
 
-  async login(loginDto: LoginDto): Promise<{ message: string; token: string; admin: Admin }> {
+  async login(
+    loginDto: LoginDto,
+  ): Promise<{ message: string; token: string; admin: Admin }> {
     // Find admin by email
     const admin = await this.adminRepository.findOne({
       where: { email: loginDto.email },
     });
 
     if (!admin) {
-      throw new HttpException('Invalid email or password', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        'Invalid email or password',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     // Compare password
-    const isPasswordValid = await bcrypt.compare(loginDto.password, admin.password);
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      admin.password,
+    );
 
     if (!isPasswordValid) {
-      throw new HttpException('Invalid email or password', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        'Invalid email or password',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     // Generate JWT token

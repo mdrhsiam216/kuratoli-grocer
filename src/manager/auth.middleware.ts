@@ -7,16 +7,17 @@ import { Request, Response, NextFunction } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Customer } from './entities/customer.entity';
+import { Manager } from './entities/manager.entity';
 
 @Injectable()
-export class CustomerAuthMiddleware implements NestMiddleware {
+export class ManagerAuthMiddleware implements NestMiddleware {
   constructor(
     private jwtService: JwtService,
-    @InjectRepository(Customer)
-    private customerRepository: Repository<Customer>,
+    @InjectRepository(Manager)
+    private managerRepository: Repository<Manager>,
   ) {}
 
+  
   async use(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization;
 
@@ -28,16 +29,15 @@ export class CustomerAuthMiddleware implements NestMiddleware {
 
     try {
       const decoded = this.jwtService.verify(token);
-      const customer = await this.customerRepository.findOne({
+      const manager = await this.managerRepository.findOne({
         where: { email: decoded.email },
       });
 
-      if (!customer || customer.token !== token) {
+      if (!manager || manager.token !== token) {
         throw new UnauthorizedException('Invalid token');
       }
 
-      const requestWithUser = req as Request & { user?: Customer };
-      requestWithUser.user = customer;
+      req.user = manager;
       next();
     } catch (error) {
       throw new UnauthorizedException('Token verification failed');

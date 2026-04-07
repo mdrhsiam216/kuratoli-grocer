@@ -1,4 +1,9 @@
-import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
+import {
+  Module,
+  MiddlewareConsumer,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -15,7 +20,15 @@ import { CustomerAuthMiddleware } from './auth.middleware';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Customer, Cart, CartItem, Order, OrderItem, Product, Coupon]),
+    TypeOrmModule.forFeature([
+      Customer,
+      Cart,
+      CartItem,
+      Order,
+      OrderItem,
+      Product,
+      Coupon,
+    ]),
     PassportModule,
     JwtModule.register({
       secret: 'your-secret-key',
@@ -27,13 +40,15 @@ import { CustomerAuthMiddleware } from './auth.middleware';
 })
 export class CustomerModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(CustomerAuthMiddleware).forRoutes(
-      { path: 'customer/profile', method: RequestMethod.ALL },
-      { path: 'customer/orders', method: RequestMethod.ALL },
-      { path: 'customer/orders/:id', method: RequestMethod.ALL },
-      { path: 'customer/cart', method: RequestMethod.ALL },
-      { path: 'customer/cart/add', method: RequestMethod.ALL },
-      { path: 'customer/checkout', method: RequestMethod.ALL },
-    );
+    consumer
+      .apply(CustomerAuthMiddleware)
+      .forRoutes(
+        { path: 'customer/profile', method: RequestMethod.ALL },
+        { path: 'customer/orders', method: RequestMethod.ALL },
+        { path: 'customer/orders/:id', method: RequestMethod.ALL },
+        { path: 'customer/cart', method: RequestMethod.ALL },
+        { path: 'customer/cart/add', method: RequestMethod.ALL },
+        { path: 'customer/checkout', method: RequestMethod.ALL },
+      );
   }
 }

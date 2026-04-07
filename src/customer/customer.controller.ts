@@ -36,7 +36,10 @@ export class CustomerController {
   }
 
   @Patch('profile')
-  updateProfile(@Req() req: any, @Body(ValidationPipe) updateCustomerDto: UpdateCustomerDto) {
+  updateProfile(
+    @Req() req: any,
+    @Body(ValidationPipe) updateCustomerDto: UpdateCustomerDto,
+  ) {
     return this.customerService.updateProfile(req.user, updateCustomerDto);
   }
 
@@ -56,7 +59,10 @@ export class CustomerController {
   }
 
   @Post('cart/add')
-  addCartItem(@Req() req: any, @Body(ValidationPipe) addCartItemDto: AddCartItemDto) {
+  addCartItem(
+    @Req() req: any,
+    @Body(ValidationPipe) addCartItemDto: AddCartItemDto,
+  ) {
     return this.customerService.addCartItem(req.user, addCartItemDto);
   }
 
