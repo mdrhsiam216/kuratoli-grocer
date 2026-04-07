@@ -13,4 +13,7 @@ export class Admin {
 
   @Column()
   password!: string;
+
+  @Column({ nullable: true })
+  token!: string;
 }

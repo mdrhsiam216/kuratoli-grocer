@@ -16,4 +16,7 @@ export class Manager {
 
   @Column({ nullable: true })
   photo!: string;
+
+  @Column({ nullable: true })
+  token!: string;
 }

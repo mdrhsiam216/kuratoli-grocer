@@ -22,4 +22,8 @@ export class AdminDto {
   @IsNotEmpty()
   @IsString()
   password!: string;
+
+  @IsOptional()
+  @IsString()
+  token?: string;
 }

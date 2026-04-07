@@ -32,6 +32,9 @@ export class Customer {
   @Column({ nullable: true })
   photo!: string;
 
+  @Column({ nullable: true })
+  token!: string;
+
   @OneToOne(() => Cart, (cart) => cart.customer)
   cart!: Cart;
 

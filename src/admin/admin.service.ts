@@ -1,82 +1,73 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import { Admin } from './entities/admin.entity';
 import { AdminDto } from './dto/admin.dto';
-// import { CustomerDto } from './dto/customer.dto';
-import { SellerDto } from '../seller/dto/seller.dto';
-// import { ManagerDto } from './dto/manager.dto';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AdminService {
-  // create(AdminDto: AdminDto):object {
-  //   return AdminDto;
-  // }
-  // getProfile(id){
-  //   return {
-  //     msg: `returned profile with id ${id}`
-  //   }
-  // }
-  // findAllCustomer() {
-  //   return {
-  //     msg : "returned all customer"
-  //   };
-  // }
-  // findAllSeller() {
-  //   return {
-  //     msg : "returned all seller"
-  //   };
-  // }
-  // findAllManager() {
-  //   return {
-  //     msg : "returned all Manager"
-  //   };
-  // }
-  // // single customer / seller / manager
-  // findOneCustomer(id: number) {
-  //   return `This action returns a #${id} customer`;
-  // }
-  // findOneSeller(id: number) {
-  //   return `This action returns a #${id} seller`;
-  // }
-  // findOneManager(id: number) {
-  //   return `This action returns a #${id} manager`;
-  // }
-  // // create
-  // createCustomer(customer: CustomerDto) {
-  //   return customer;
-  // }
-  // createSeller(seller: SellerDto) {
-  //   return seller;
-  // }
-  // createManager(manager: ManagerDto) {
-  //   return manager;
-  // }
-  // update
-  // updateCustomer(id: number, customer: CustomerDto) {
-  //   return `This action updates a #${id} customer`;
-  // }
-  // updateSeller(id: number, seller: SellerDto) {
-  //   return `This action updates a #${id} seller`;
-  // }
-  // updateManager(id: number, manager: ManagerDto) {
-  //   return `This action updates a #${id} manager`;
-  // }
-  // partial update
-  // partialUpdateCustomer(id: number, partial: Partial<CustomerDto>) {
-  //   return `This action partially updates a #${id} customer`;
-  // }
-  // partialUpdateSeller(id: number, partial: Partial<SellerDto>) {
-  //   return `This action partially updates a #${id} seller`;
-  // }
-  // partialUpdateManager(id: number, partial: Partial<ManagerDto>) {
-  //   return `This action partially updates a #${id} manager`;
-  // }
-  // // delete
-  // removeCustomer(id: number) {
-  //   return `This action removes a #${id} customer`;
-  // }
-  // removeSeller(id: number) {
-  //   return `This action removes a #${id} seller`;
-  // }
-  // removeManager(id: number) {
-  //   return `This action removes a #${id} manager`;
-  // }
+  constructor(
+    @InjectRepository(Admin)
+    private adminRepository: Repository<Admin>,
+    private jwtService: JwtService,
+  ) {}
+
+  async register(adminDto: AdminDto): Promise<{ message: string; admin: Admin }> {
+    // Check if email already exists
+    const existingAdmin = await this.adminRepository.findOne({
+      where: { email: adminDto.email },
+    });
+
+    if (existingAdmin) {
+      throw new HttpException('Email already exists', HttpStatus.BAD_REQUEST);
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(adminDto.password, 10);
+
+    // Create admin
+    const admin = this.adminRepository.create({
+      name: adminDto.name,
+      email: adminDto.email,
+      password: hashedPassword,
+    });
+
+    const savedAdmin = await this.adminRepository.save(admin);
+    return { message: 'Admin registered successfully', admin: savedAdmin };
+  }
+
+  async login(loginDto: LoginDto): Promise<{ message: string; token: string; admin: Admin }> {
+    // Find admin by email
+    const admin = await this.adminRepository.findOne({
+      where: { email: loginDto.email },
+    });
+
+    if (!admin) {
+      throw new HttpException('Invalid email or password', HttpStatus.UNAUTHORIZED);
+    }
+
+    // Compare password
+    const isPasswordValid = await bcrypt.compare(loginDto.password, admin.password);
+
+    if (!isPasswordValid) {
+      throw new HttpException('Invalid email or password', HttpStatus.UNAUTHORIZED);
+    }
+
+    // Generate JWT token
+    const payload = { email: admin.email, sub: admin.id };
+    const token = this.jwtService.sign(payload);
+
+    // Store token in database
+    admin.token = token;
+    await this.adminRepository.save(admin);
+
+    return { message: 'Admin logged in successfully', token, admin };
+  }
+
+  async getProfile(admin: Admin): Promise<Admin> {
+    return admin;
+  }
 }

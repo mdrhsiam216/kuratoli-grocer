@@ -24,6 +24,9 @@ export class Seller {
   @Column({ default: true })
   status!: boolean;
 
+  @Column({ nullable: true })
+  token!: string;
+
   @OneToMany(() => Product, (product) => product.seller)
   products!: Product[];
 }
