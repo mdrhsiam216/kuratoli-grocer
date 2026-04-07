@@ -22,6 +22,16 @@ import { AuthMiddleware } from './auth.middleware';
 })
 export class AdminModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware).forRoutes('admin/profile');
+    consumer
+      .apply(AuthMiddleware)
+      .forRoutes(
+        'admin/profile',
+        'admin/stats',
+        'admin/customers',
+        'admin/orders',
+        'admin/sellers',
+        'admin/products',
+        'admin/logout',
+      );
   }
 }

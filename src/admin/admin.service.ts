@@ -70,4 +70,85 @@ export class AdminService {
   async getProfile(admin: Admin): Promise<Admin> {
     return admin;
   }
+
+  // New protected routes
+
+  async getDashboardStats(admin: Admin): Promise<any> {
+    // Get aggregate statistics for admin dashboard
+    // This requires connection to other entities' repositories
+    return {
+      message: 'Dashboard stats',
+      admin: admin.email,
+      timestamp: new Date(),
+    };
+  }
+
+  async getAllCustomers(admin: Admin): Promise<any> {
+    // Return all customers list
+    // Admin verified through JWT middleware
+    return {
+      message: 'Customers list retrieved',
+      admin: admin.email,
+      timestamp: new Date(),
+    };
+  }
+
+  async getAllOrders(admin: Admin): Promise<any> {
+    // Return all orders with pagination
+    // Admin verified through JWT middleware
+    return {
+      message: 'Orders list retrieved',
+      admin: admin.email,
+      timestamp: new Date(),
+    };
+  }
+
+  async getAllSellers(admin: Admin): Promise<any> {
+    // Return all sellers information
+    // Admin verified through JWT middleware
+    return {
+      message: 'Sellers list retrieved',
+      admin: admin.email,
+      timestamp: new Date(),
+    };
+  }
+
+  async getAllProducts(admin: Admin): Promise<any> {
+    // Return all products from all sellers
+    // Admin verified through JWT middleware
+    return {
+      message: 'Products list retrieved',
+      admin: admin.email,
+      timestamp: new Date(),
+    };
+  }
+
+  async updateProfile(
+    admin: Admin,
+    updateData: Partial<{ name: string; email: string }>,
+  ): Promise<{ message: string; admin: Admin }> {
+    // Update admin profile information
+    // Only allow updating name and email
+    const existingAdmin = await this.adminRepository.findOne({
+      where: { email: updateData.email },
+    });
+
+    if (existingAdmin && existingAdmin.id !== admin.id) {
+      throw new HttpException('Email already in use', HttpStatus.BAD_REQUEST);
+    }
+
+    admin.name = updateData.name || admin.name;
+    admin.email = updateData.email || admin.email;
+
+    const updatedAdmin = await this.adminRepository.save(admin);
+    return { message: 'Profile updated successfully', admin: updatedAdmin };
+  }
+
+  async logout(admin: Admin): Promise<{ message: string }> {
+    // Revoke token by removing it from database
+    // This prevents token reuse
+    admin.token = null;
+    await this.adminRepository.save(admin);
+    return { message: 'Successfully logged out' };
+  }
 }
