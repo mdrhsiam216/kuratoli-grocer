@@ -8,6 +8,9 @@ import { Admin } from './entities/admin.entity';
 import { AdminDto } from './dto/admin.dto';
 import { LoginDto } from './dto/login.dto';
 import { Customer } from '../customer/entities/customer.entity';
+import { Category } from '../category/entities/category.entity';
+import { Coupon } from '../coupon/entities/coupon.entity';
+import { Manager } from '../manager/entities/manager.entity';
 import { Seller } from '../seller/entities/seller.entity';
 import { Product } from '../product/entities/product.entity';
 import { Order } from '../order/entities/order.entity';
@@ -25,6 +28,12 @@ export class AdminService {
     private productRepository: Repository<Product>,
     @InjectRepository(Order)
     private orderRepository: Repository<Order>,
+    @InjectRepository(Category)
+    private categoryRepository: Repository<Category>,
+    @InjectRepository(Coupon)
+    private couponRepository: Repository<Coupon>,
+    @InjectRepository(Manager)
+    private managerRepository: Repository<Manager>,
     private jwtService: JwtService,
     private mailerService: MailerService,
   ) {}
@@ -136,5 +145,106 @@ export class AdminService {
     admin.token = null;
     await this.adminRepository.save(admin);
     return { message: 'Logged out' };
+  }
+
+  // Category CRUD
+  async getCategories(admin: Admin) {
+    const categories = await this.categoryRepository.find();
+    return { message: 'Categories retrieved', categories };
+  }
+
+  async createCategory(admin: Admin, data: { name: string }) {
+    const category = this.categoryRepository.create({ name: data.name });
+    const saved = await this.categoryRepository.save(category);
+    return { message: 'Category created', category: saved };
+  }
+
+  async updateCategory(admin: Admin, id: number, data: { name: string }) {
+    const category = await this.categoryRepository.findOne({ where: { id } });
+    if (!category) throw new HttpException('Category not found', HttpStatus.NOT_FOUND);
+    category.name = data.name;
+    const updated = await this.categoryRepository.save(category);
+    return { message: 'Category updated', category: updated };
+  }
+
+  async deleteCategory(admin: Admin, id: number) {
+    const category = await this.categoryRepository.findOne({ where: { id } });
+    if (!category) throw new HttpException('Category not found', HttpStatus.NOT_FOUND);
+    await this.categoryRepository.remove(category);
+    return { message: 'Category deleted' };
+  }
+
+  // Coupon CRUD
+  async getCoupons(admin: Admin) {
+    const coupons = await this.couponRepository.find();
+    return { message: 'Coupons retrieved', coupons };
+  }
+
+  async createCoupon(admin: Admin, data: { code: string; discountPercentage: number; maxUsage: number }) {
+    const coupon = this.couponRepository.create(data);
+    const saved = await this.couponRepository.save(coupon);
+    return { message: 'Coupon created', coupon: saved };
+  }
+
+  async updateCoupon(admin: Admin, id: number, data: Partial<{ code: string; discountPercentage: number; maxUsage: number }>) {
+    const coupon = await this.couponRepository.findOne({ where: { id } });
+    if (!coupon) throw new HttpException('Coupon not found', HttpStatus.NOT_FOUND);
+    Object.assign(coupon, data);
+    const updated = await this.couponRepository.save(coupon);
+    return { message: 'Coupon updated', coupon: updated };
+  }
+
+  async deleteCoupon(admin: Admin, id: number) {
+    const coupon = await this.couponRepository.findOne({ where: { id } });
+    if (!coupon) throw new HttpException('Coupon not found', HttpStatus.NOT_FOUND);
+    await this.couponRepository.remove(coupon);
+    return { message: 'Coupon deleted' };
+  }
+
+  // Manager CRUD
+  async getManagers(admin: Admin) {
+    const managers = await this.managerRepository.find();
+    return { message: 'Managers retrieved', managers };
+  }
+
+  async createManager(admin: Admin, data: { name: string; email: string; password: string }) {
+    const existing = await this.managerRepository.findOne({ where: { email: data.email } });
+    if (existing) throw new HttpException('Email exists', HttpStatus.BAD_REQUEST);
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const manager = this.managerRepository.create({ ...data, password: hashedPassword });
+    const saved = await this.managerRepository.save(manager);
+    return { message: 'Manager created', manager: saved };
+  }
+
+  async updateManager(admin: Admin, id: number, data: Partial<{ name: string; email: string }>) {
+    const manager = await this.managerRepository.findOne({ where: { id } });
+    if (!manager) throw new HttpException('Manager not found', HttpStatus.NOT_FOUND);
+    Object.assign(manager, data);
+    const updated = await this.managerRepository.save(manager);
+    return { message: 'Manager updated', manager: updated };
+  }
+
+  async deleteManager(admin: Admin, id: number) {
+    const manager = await this.managerRepository.findOne({ where: { id } });
+    if (!manager) throw new HttpException('Manager not found', HttpStatus.NOT_FOUND);
+    await this.managerRepository.remove(manager);
+    return { message: 'Manager deleted' };
+  }
+
+  // Seller Management
+  async approveSeller(admin: Admin, id: number) {
+    const seller = await this.sellerRepository.findOne({ where: { id } });
+    if (!seller) throw new HttpException('Seller not found', HttpStatus.NOT_FOUND);
+    seller.status = true;
+    const updated = await this.sellerRepository.save(seller);
+    return { message: 'Seller approved', seller: updated };
+  }
+
+  async rejectSeller(admin: Admin, id: number) {
+    const seller = await this.sellerRepository.findOne({ where: { id } });
+    if (!seller) throw new HttpException('Seller not found', HttpStatus.NOT_FOUND);
+    seller.status = false;
+    const updated = await this.sellerRepository.save(seller);
+    return { message: 'Seller rejected', seller: updated };
   }
 }

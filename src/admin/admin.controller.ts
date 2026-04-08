@@ -3,8 +3,10 @@ import {
   Post,
   Get,
   Put,
+  Delete,
   Body,
   Req,
+  Param,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
@@ -76,5 +78,93 @@ export class AdminController {
   @Post('logout')
   logout(@Req() req: any) {
     return this.adminService.logout(req.user);
+  }
+
+  // Category CRUD
+  @UseGuards(AdminAuthGuard)
+  @Get('categories')
+  getCategories() {
+    return this.adminService.getCategories(null as any);
+  }
+
+  @UseGuards(AdminAuthGuard)
+  @Post('categories')
+  createCategory(@Body() data: { name: string }) {
+    return this.adminService.createCategory(null as any, data);
+  }
+
+  @UseGuards(AdminAuthGuard)
+  @Put('categories/:id')
+  updateCategory(@Param('id') id: string, @Body() data: { name: string }) {
+    return this.adminService.updateCategory(null as any, +id, data);
+  }
+
+  @UseGuards(AdminAuthGuard)
+  @Delete('categories/:id')
+  deleteCategory(@Param('id') id: string) {
+    return this.adminService.deleteCategory(null as any, +id);
+  }
+
+  // Coupon CRUD
+  @UseGuards(AdminAuthGuard)
+  @Get('coupons')
+  getCoupons() {
+    return this.adminService.getCoupons(null as any);
+  }
+
+  @UseGuards(AdminAuthGuard)
+  @Post('coupons')
+  createCoupon(@Body() data: { code: string; discountPercentage: number; maxUsage: number }) {
+    return this.adminService.createCoupon(null as any, data);
+  }
+
+  @UseGuards(AdminAuthGuard)
+  @Put('coupons/:id')
+  updateCoupon(@Param('id') id: string, @Body() data: any) {
+    return this.adminService.updateCoupon(null as any, +id, data);
+  }
+
+  @UseGuards(AdminAuthGuard)
+  @Delete('coupons/:id')
+  deleteCoupon(@Param('id') id: string) {
+    return this.adminService.deleteCoupon(null as any, +id);
+  }
+
+  // Manager CRUD
+  @UseGuards(AdminAuthGuard)
+  @Get('managers')
+  getManagers() {
+    return this.adminService.getManagers(null as any);
+  }
+
+  @UseGuards(AdminAuthGuard)
+  @Post('managers')
+  createManager(@Body() data: { name: string; email: string; password: string }) {
+    return this.adminService.createManager(null as any, data);
+  }
+
+  @UseGuards(AdminAuthGuard)
+  @Put('managers/:id')
+  updateManager(@Param('id') id: string, @Body() data: any) {
+    return this.adminService.updateManager(null as any, +id, data);
+  }
+
+  @UseGuards(AdminAuthGuard)
+  @Delete('managers/:id')
+  deleteManager(@Param('id') id: string) {
+    return this.adminService.deleteManager(null as any, +id);
+  }
+
+  // Seller Management
+  @UseGuards(AdminAuthGuard)
+  @Put('sellers/:id/approve')
+  approveSeller(@Param('id') id: string) {
+    return this.adminService.approveSeller(null as any, +id);
+  }
+
+  @UseGuards(AdminAuthGuard)
+  @Put('sellers/:id/reject')
+  rejectSeller(@Param('id') id: string) {
+    return this.adminService.rejectSeller(null as any, +id);
   }
 }
